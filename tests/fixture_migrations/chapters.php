@@ -8,10 +8,11 @@ return new class extends Migration
 {
     public function up()
     {
-        Schema::create('migration_table_name_table', function (Blueprint $table) {
+        Schema::create('chapters', function (Blueprint $table) {
             $table->id();
 
-            // add fields
+            $table->unsignedBigInteger('book_id')->index();
+            $table->tinyInteger('sorting')->default(0)->index();
 
             $table->timestamps();
         });

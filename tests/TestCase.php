@@ -1,37 +1,36 @@
 <?php
 
-namespace VendorName\Skeleton\Tests;
+namespace SwissDevjoy\LaravelEasyHashids\Tests;
 
-use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\File;
+use Livewire\LivewireServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
-use VendorName\Skeleton\SkeletonServiceProvider;
+use SwissDevjoy\LaravelEasyHashids\LaravelEasyHashidsServiceProvider;
 
 class TestCase extends Orchestra
 {
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        Factory::guessFactoryNamesUsing(
-            fn (string $modelName) => 'VendorName\\Skeleton\\Database\\Factories\\'.class_basename($modelName).'Factory'
-        );
-    }
-
     protected function getPackageProviders($app)
     {
         return [
-            SkeletonServiceProvider::class,
+            LivewireServiceProvider::class,
+            LaravelEasyHashidsServiceProvider::class,
         ];
     }
 
     public function getEnvironmentSetUp($app)
     {
-        config()->set('database.default', 'testing');
+        config([
+            'app.key' => 'base64:f2lupX5ecwW919amtuqsETEC3SJY54+9B/qE3/43EVk=',
+            'database.default' => 'testing',
+        ]);
 
-        /*
-         foreach (\Illuminate\Support\Facades\File::allFiles(__DIR__ . '/database/migrations') as $migration) {
+        foreach (File::allFiles(__DIR__.'/fixture_migrations') as $migration) {
             (include $migration->getRealPath())->up();
-         }
-         */
+        }
+
+        Model::unguard();
+
+        $app['config']->set('view.paths', [__DIR__.'/resources/views']);
     }
 }

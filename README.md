@@ -1,69 +1,177 @@
-# :package_description
+# Easy HashIds for Laravel Eloquent Models with Livewire Support
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/:vendor_slug/:package_slug.svg?style=flat-square)](https://packagist.org/packages/:vendor_slug/:package_slug)
-[![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/:vendor_slug/:package_slug/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/:vendor_slug/:package_slug/actions?query=workflow%3Arun-tests+branch%3Amain)
-[![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/:vendor_slug/:package_slug/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/:vendor_slug/:package_slug/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
-[![Total Downloads](https://img.shields.io/packagist/dt/:vendor_slug/:package_slug.svg?style=flat-square)](https://packagist.org/packages/:vendor_slug/:package_slug)
-<!--delete-->
----
-This repo can be used to scaffold a Laravel package. Follow these steps to get started:
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/swiss-devjoy/laravel-easy-hashids.svg?style=flat-square)](https://packagist.org/packages/swiss-devjoy/laravel-easy-hashids)
+[![Total Downloads](https://img.shields.io/packagist/dt/swiss-devjoy/laravel-easy-hashids.svg?style=flat-square)](https://packagist.org/packages/swiss-devjoy/laravel-easy-hashids)
 
-1. Press the "Use this template" button at the top of this repo to create a new repo with the contents of this skeleton.
-2. Run "php ./configure.php" to run a script that will replace all placeholders throughout all the files.
-3. Have fun creating your package.
-4. If you need help creating a package, consider picking up our <a href="https://laravelpackage.training">Laravel Package Training</a> video course.
----
-<!--/delete-->
-This is where your description should go. Limit it to a paragraph or two. Consider adding a small example.
+A lightweight package that adds Hashid support to your Eloquent models. It automatically generates unique hashids for your models and includes Livewire support for only exposing the hashid as key to properly identify a public model.
 
-## Support us
+## Why Use HashIds?
 
-[<img src="https://github-ads.s3.eu-central-1.amazonaws.com/:package_name.jpg?t=1" width="419px" />](https://spatie.be/github-ad-click/:package_name)
+- **Security by Obscurity**: Hide your sequential database IDs from users (although is not an encryption library)
+- **Predictability Prevention**: Avoid exposing information about your data volume
+- **Performance**: Invalid hashids don't lead to unnecessary database fetches (in most cases)
 
-We invest a lot of resources into creating [best in class open source packages](https://spatie.be/open-source). You can support us by [buying one of our paid products](https://spatie.be/open-source/support-us).
+## Features
 
-We highly appreciate you sending us a postcard from your hometown, mentioning which of our package(s) you are using. You'll find our address on [our contact page](https://spatie.be/about-us). We publish all received postcards on [our virtual postcard wall](https://spatie.be/open-source/postcards).
+- ✅ Easy integration with any Eloquent model
+- ✅ Automatic hashid generation based on model IDs
+- ✅ Livewire component support for passing models with hashids
+- ✅ Route model binding support
+- ✅ Auto generation of different hashids for different models, even if the ID is the same
+- ✅ Configurable alphabet and minimum length globally and per model
+- ✅ No database migrations needed - works with your existing models
 
 ## Installation
 
 You can install the package via composer:
 
 ```bash
-composer require :vendor_slug/:package_slug
-```
-
-You can publish and run the migrations with:
-
-```bash
-php artisan vendor:publish --tag=":package_slug-migrations"
-php artisan migrate
+composer require swiss-devjoy/laravel-easy-hashids
 ```
 
 You can publish the config file with:
 
 ```bash
-php artisan vendor:publish --tag=":package_slug-config"
+php artisan vendor:publish --tag="laravel-easy-hashids-config"
 ```
 
 This is the contents of the published config file:
 
 ```php
 return [
+    'default' => [
+        // Generate a unique alphabet here: https://sqids.org/playground
+        'alphabet' => env('HASHID_DEFAULT_ALPHABET', 'VCzODgjZNMFaXTfqnhLp84EtHlk7RmiWrScBoPIwK2QGxs1ed35UJ6yAYb0v9u'),
+        'min_length' => env('HASHID_DEFAULT_MIN_LENGTH', 10),
+    ],
+
+    'models' => [
+        // App\Models\YourModel::class => [
+        //     'alphabet' => 'kwevdSQOEiT349X5atVrLozGHFWYp87uAUlc0mbPNIJKf1qMshCyg2BD6ZxnjR',
+        //     'min_length' => 10,
+        // ],
+    ],
 ];
-```
-
-Optionally, you can publish the views using
-
-```bash
-php artisan vendor:publish --tag=":package_slug-views"
 ```
 
 ## Usage
 
+1. Add the `HasHashid` and `HashidRouting` traits to any Eloquent model:
+
 ```php
-$variable = new VendorName\Skeleton();
-echo $variable->echoPhrase('Hello, VendorName!');
+use SwissDevjoy\LaravelEasyHashids\HasHashid;
+use SwissDevjoy\LaravelEasyHashids\HashidRouting;
+
+class Product extends Model
+{
+    use HasHashid;
+    use HashidRouting;
+}
 ```
+
+2. Access the hashid in your code:
+
+```php
+$product = Product::find(1);
+echo $product->hashid; // Returns something like "2tFub5I1ge"
+```
+
+3. Use route model binding with hashids:
+
+```php
+Route::get('/products/{product}', function (Product $product) {
+    return view('products.show', compact('product'));
+})->name('products.product');
+
+// Generates a URL with the hashid that looks sth like /products/2tFub5I1ge
+route('products.show', ['product' => $product]);
+```
+
+## Configuration
+
+The published config file contains these settings:
+
+```php
+return [
+    'default' => [
+        // Generate a unique alphabet here: https://sqids.org/playground
+        'alphabet' => env('HASHID_DEFAULT_ALPHABET', 'VCzODgjZNMFaXTfqnhLp84EtHlk7RmiWrScBoPIwK2QGxs1ed35UJ6yAYb0v9u'),
+        'min_length' => env('HASHID_DEFAULT_MIN_LENGTH', 10),
+    ],
+
+    'models' => [
+        // App\Models\YourModel::class => [
+        //     'alphabet' => 'kwevdSQOEiT349X5atVrLozGHFWYp87uAUlc0mbPNIJKf1qMshCyg2BD6ZxnjR',
+        //     'min_length' => 10,
+        // ],
+    ],
+];
+```
+
+### Working with Livewire
+
+The package automatically handles Livewire integration. When passing models with the `HasHashid` trait to Livewire components, their IDs will be converted to hashids:
+
+```php
+class BookComponent extends Component
+{
+    public Book $book;
+
+    public function render()
+    {
+        return view('components.book');
+    }
+}
+```
+
+The model will be automatically serialized with the hashid and reconstituted when needed.
+
+### Converting Between IDs and HashIds
+
+You can manually convert between IDs and hashids:
+
+```php
+$book = Book::make();
+
+// Convert ID to hashid
+$hashid = $book->idToHashid(10);
+
+// Convert hashid back to ID
+$id = $book->hashidToId('2tFub5I1ge');
+```
+
+### Relationships
+
+The package works seamlessly with Eloquent relationships:
+
+```php
+// Author model (uses HasHashid)
+$author = Author::findByHashidOrFail('uwe14hrgh');
+
+// Book model (uses HasHashid)
+$book = $author->books()->findByHashid('2tFub5I1ge');
+```
+
+## Advanced Configuration
+
+### Model-Specific Settings
+
+You can customize the alphabet and minimum hashid length for specific models in the config file:
+
+```php
+'models' => [
+    App\Models\Book::class => [
+        'alphabet' => 'xyz123ABC789DEFGHIJKLMNOPQRSTUVWdefghijklmnopqrstuvwab456XYZ',
+        'min_length' => 12,
+    ],
+],
+```
+
+### Auto-Generated Alphabets
+
+If no custom configuration is provided, the package will generate a unique alphabet for each model based on the class name. This ensures distinct hashids across different models even for identical database IDs.
+
+For example, `User::find(1)->hashid` will be different from `Product::find(1)->hashid`.
 
 ## Testing
 
@@ -85,7 +193,7 @@ Please review [our security policy](../../security/policy) on how to report secu
 
 ## Credits
 
-- [:author_name](https://github.com/:author_username)
+- [Dimitri König](https://github.com/dimitri-koenig)
 - [All Contributors](../../contributors)
 
 ## License
